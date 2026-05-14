@@ -3,9 +3,9 @@ spring:
     name: orderflow
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/orderflow
-    username: root
-    password: root
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -22,9 +22,13 @@ spring:
     baseline-on-migrate: true
 
 jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-key-for-jwt-generation-must-be-long-enough}
+  secret: ${JWT_SECRET}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
+
+#  redis:
+#    host: localhost
+#    port: 6379
 
 server:
   port: 8080
