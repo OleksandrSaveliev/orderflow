@@ -1,6 +1,6 @@
 package com.my.orderflow.dto.auth;
 
-public record RefreshTokenResponseDto(
+public record RefreshResponseDto(
 
          String accessToken,
 

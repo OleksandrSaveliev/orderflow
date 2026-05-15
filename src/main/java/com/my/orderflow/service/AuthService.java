@@ -2,7 +2,7 @@ package com.my.orderflow.service;
 
 import com.my.orderflow.dto.auth.AuthResponseDto;
 import com.my.orderflow.dto.auth.LoginRequestDto;
-import com.my.orderflow.dto.auth.RefreshTokenResponseDto;
+import com.my.orderflow.dto.auth.RefreshResponseDto;
 import com.my.orderflow.dto.auth.RegisterRequestDto;
 import com.my.orderflow.model.RefreshToken;
 import com.my.orderflow.model.User;
@@ -12,10 +12,10 @@ import com.my.orderflow.repository.UserRepository;
 import com.my.orderflow.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +27,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    @Value("${jwt.access-token-expiration:900000}")
+    private long accessTokenExpiration;
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -61,20 +64,17 @@ public class AuthService {
 
         saveRefreshToken(savedUser.getId(), refreshToken);
 
-        return new AuthResponseDto(accessToken, refreshToken, "Bearer", 900000L);
+        return new AuthResponseDto(accessToken, refreshToken, "Bearer", accessTokenExpiration);
     }
 
     @Transactional
     public AuthResponseDto login(LoginRequestDto request) {
-        // Authenticate
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = (User) authentication.getPrincipal();
 
         String accessToken = jwtService.generateAccessToken(
                 user.getId(),
@@ -88,11 +88,11 @@ public class AuthService {
 
         log.info("User logged in: {}", user.getEmail());
 
-        return new AuthResponseDto(accessToken, refreshToken, "Bearer", 900000L);
+        return new AuthResponseDto(accessToken, refreshToken, "Bearer", accessTokenExpiration);
     }
 
     @Transactional
-    public RefreshTokenResponseDto refreshAccessToken(String refreshToken) {
+    public RefreshResponseDto refreshAccessToken(String refreshToken) {
 
         if (!jwtService.isTokenValid(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
@@ -122,7 +122,7 @@ public class AuthService {
 
         log.debug("Refreshed access token for user: {}", user.getEmail());
 
-        return new RefreshTokenResponseDto(newAccessToken, "Bearer", 900000L);
+        return new RefreshResponseDto(newAccessToken, "Bearer", accessTokenExpiration);
     }
 
     @Transactional
