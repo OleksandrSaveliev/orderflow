@@ -32,10 +32,10 @@ public class AuthService {
 
     private static final String TOKEN_TYPE = "Bearer";
 
-    @Value("${jwt.access-token-expiration:900000}")
+    @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
-    @Value("${jwt.refresh-token-expiration:604800000}")
+    @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
     private final UserRepository userRepository;
@@ -81,10 +81,6 @@ public class AuthService {
         );
 
         User user = (User) authentication.getPrincipal();
-
-        if (user == null) {
-            throw new IllegalStateException("Authentication principal is null");
-        }
 
         refreshTokenRepository.revokeAllUserTokens(user.getId());
 
