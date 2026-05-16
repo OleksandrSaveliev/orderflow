@@ -2,6 +2,7 @@ package com.my.orderflow.service;
 
 import com.my.orderflow.dto.product.ProductRequestDto;
 import com.my.orderflow.dto.product.ProductResponseDto;
+import com.my.orderflow.exception.ProductAlreadyExistsException;
 import com.my.orderflow.exception.ProductNotFoundException;
 import com.my.orderflow.mapper.ProductMapper;
 import com.my.orderflow.model.Product;
@@ -49,7 +50,7 @@ public class ProductService {
     @Transactional
     public ProductResponseDto create(ProductRequestDto request) {
         if (productRepository.existsByTitle(request.title())) {
-            throw new IllegalArgumentException("Product with title already exists: " + request.title());
+            throw new ProductAlreadyExistsException(request.title());
         }
 
         Product product = productMapper.toEntity(request);
@@ -81,7 +82,7 @@ public class ProductService {
 
         if (!product.getTitle().equals(request.title())
                 && productRepository.existsByTitle(request.title())) {
-            throw new IllegalArgumentException("Product with title already exists: " + request.title());
+            throw new ProductAlreadyExistsException(request.title());
         }
 
         product.setTitle(request.title());

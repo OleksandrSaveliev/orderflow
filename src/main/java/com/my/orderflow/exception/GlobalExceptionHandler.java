@@ -97,12 +97,12 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler(UserNotFoundException.class)
-    public ErrorResponseDto handleUserNotFound(
-            UserNotFoundException ex,
+    @ExceptionHandler({UserNotFoundException.class, ProductNotFoundException.class})
+    public ErrorResponseDto handleNotFound(
+            RuntimeException ex,
             HttpServletRequest request) {
 
-        log.debug("User not found for request {}: {}", request.getRequestURI(), ex.getMessage());
+        log.debug("Resource not found for request {}: {}", request.getRequestURI(), ex.getMessage());
 
         return new ErrorResponseDto(
                 HttpStatus.NOT_FOUND.value(),
@@ -113,12 +113,12 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ErrorResponseDto handleEmailAlreadyExists(
-            EmailAlreadyExistsException ex,
+    @ExceptionHandler({EmailAlreadyExistsException.class, ProductAlreadyExistsException.class})
+    public ErrorResponseDto handleConflict(
+            RuntimeException ex,
             HttpServletRequest request) {
 
-        log.debug("Email conflict for request {}: {}", request.getRequestURI(), ex.getMessage());
+        log.debug("Conflict for request {}: {}", request.getRequestURI(), ex.getMessage());
 
         return new ErrorResponseDto(
                 HttpStatus.CONFLICT.value(),
