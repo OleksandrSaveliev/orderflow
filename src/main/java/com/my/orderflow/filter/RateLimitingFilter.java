@@ -59,18 +59,21 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String clientIp = getClientIp(request);
         IpRequestInfo info = requestCounts.computeIfAbsent(clientIp, k -> new IpRequestInfo());
 
-        if (info.isExpired(windowSeconds)) {
-            info.reset();
+        synchronized (info) {
+            if (info.isExpired(windowSeconds)) {
+                info.reset();
+            }
+
+            if (info.count.get() >= maxRequests) {
+                log.warn("Rate limit exceeded for IP: {} on URI: {}", clientIp, requestUri);
+                sendRateLimitResponse(request, response, info.getSecondsUntilReset(windowSeconds));
+                return;
+            }
+
+            info.count.incrementAndGet();
+            response.setHeader("X-RateLimit-Remaining", String.valueOf(maxRequests - info.count.get()));
         }
 
-        if (info.count.get() >= maxRequests) {
-            log.warn("Rate limit exceeded for IP: {} on URI: {}", clientIp, requestUri);
-            sendRateLimitResponse(request, response, info.getSecondsUntilReset(windowSeconds));
-            return;
-        }
-
-        info.count.incrementAndGet();
-        response.setHeader("X-RateLimit-Remaining", String.valueOf(maxRequests - info.count.get()));
         filterChain.doFilter(request, response);
     }
 
