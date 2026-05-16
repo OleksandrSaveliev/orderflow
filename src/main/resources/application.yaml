@@ -1,6 +1,8 @@
 spring:
   application:
     name: orderflow
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   datasource:
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
