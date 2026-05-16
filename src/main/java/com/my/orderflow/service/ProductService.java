@@ -5,14 +5,17 @@ import com.my.orderflow.dto.product.ProductResponseDto;
 import com.my.orderflow.exception.ProductNotFoundException;
 import com.my.orderflow.mapper.ProductMapper;
 import com.my.orderflow.model.Product;
+import com.my.orderflow.repository.ProductSpecifications;
 import com.my.orderflow.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Slf4j
@@ -22,6 +25,26 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponseDto> search(
+            String search,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            UUID categoryId,
+            Integer minQuantity,
+            Pageable pageable) {
+
+        Specification<Product> spec = Specification.where(
+                ProductSpecifications.hasTitleContaining(search))
+                .and(ProductSpecifications.hasMinPrice(minPrice))
+                .and(ProductSpecifications.hasMaxPrice(maxPrice))
+                .and(ProductSpecifications.hasCategoryId(categoryId))
+                .and(ProductSpecifications.hasMinQuantity(minQuantity));
+
+        return productRepository.findAll(spec, pageable)
+                .map(productMapper::toResponse);
+    }
 
     @Transactional
     public ProductResponseDto create(ProductRequestDto request) {
