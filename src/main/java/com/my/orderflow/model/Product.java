@@ -5,32 +5,37 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "products")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefreshToken {
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @Column(nullable = false)
+    private String title;
 
-    @Column(unique = true, nullable = false, length = 500)
-    private String token;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 
-    private boolean revoked;
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(name = "category_id")
+    private UUID categoryId;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
