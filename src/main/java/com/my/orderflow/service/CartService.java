@@ -4,6 +4,7 @@ import com.my.orderflow.dto.cart.CartItemRequestDto;
 import com.my.orderflow.dto.cart.CartResponseDto;
 import com.my.orderflow.exception.CartNotFoundException;
 import com.my.orderflow.exception.InsufficientStockException;
+import com.my.orderflow.exception.ProductNotFoundException;
 import com.my.orderflow.mapper.CartMapper;
 import com.my.orderflow.model.Cart;
 import com.my.orderflow.model.CartItem;
@@ -44,8 +45,7 @@ public class CartService {
         Cart cart = getOrCreateCart(userId);
 
         Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new RuntimeException("Product not found: " + request.productId()));
-        checkStock(product, request.quantity());
+                .orElseThrow(() -> new ProductNotFoundException(request.productId()));
 
         CartItem existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(product.getId()))
@@ -53,10 +53,14 @@ public class CartService {
                 .orElse(null);
 
         if (existingItem != null) {
-            existingItem.setQuantity(existingItem.getQuantity() + request.quantity());
+            int newQuantity = existingItem.getQuantity() + request.quantity();
+            checkStock(product, newQuantity);
+            existingItem.setQuantity(newQuantity);
             cartItemRepository.save(existingItem);
+
             log.info("Updated cart item quantity for product: {}", product.getTitle());
         } else {
+            checkStock(product, request.quantity());
             CartItem newItem = CartItem.builder()
                     .product(product)
                     .quantity(request.quantity())
@@ -64,6 +68,7 @@ public class CartService {
                     .build();
             cart.getItems().add(newItem);
             cartRepository.save(cart);
+
             log.info("Added new item to cart: {}", product.getTitle());
         }
 
@@ -110,7 +115,7 @@ public class CartService {
 
     @Transactional
     public void clearCart(UUID userId) {
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() -> new CartNotFoundException("Cart not found for user: " + userId));
 
         cartItemRepository.deleteAll(cart.getItems());

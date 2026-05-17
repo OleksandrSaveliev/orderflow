@@ -2,12 +2,12 @@ package com.my.orderflow.controller;
 
 import com.my.orderflow.dto.cart.CartItemRequestDto;
 import com.my.orderflow.dto.cart.CartResponseDto;
+import com.my.orderflow.model.User;
 import com.my.orderflow.service.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -20,48 +20,35 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public ResponseEntity<CartResponseDto> getCart(@AuthenticationPrincipal UserDetails userDetails) {
-        UUID userId = getUserId(userDetails);
-        CartResponseDto response = cartService.getCart(userId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CartResponseDto> getCart(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(cartService.getCart(user.getId()));
     }
 
     @PostMapping("/items")
     public ResponseEntity<CartResponseDto> addItem(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal User user,
             @Valid @RequestBody CartItemRequestDto request) {
-        UUID userId = getUserId(userDetails);
-        CartResponseDto response = cartService.addItem(userId, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(cartService.addItem(user.getId(), request));
     }
 
     @PutMapping("/items/{itemId}")
     public ResponseEntity<CartResponseDto> updateItemQuantity(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal User user,
             @PathVariable UUID itemId,
             @RequestParam int quantity) {
-        UUID userId = getUserId(userDetails);
-        CartResponseDto response = cartService.updateItemQuantity(userId, itemId, quantity);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(cartService.updateItemQuantity(user.getId(), itemId, quantity));
     }
 
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<CartResponseDto> removeItem(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal User user,
             @PathVariable UUID itemId) {
-        UUID userId = getUserId(userDetails);
-        CartResponseDto response = cartService.removeItem(userId, itemId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(cartService.removeItem(user.getId(), itemId));
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> clearCart(@AuthenticationPrincipal UserDetails userDetails) {
-        UUID userId = getUserId(userDetails);
-        cartService.clearCart(userId);
+    public ResponseEntity<Void> clearCart(@AuthenticationPrincipal User user) {
+        cartService.clearCart(user.getId());
         return ResponseEntity.noContent().build();
-    }
-
-    private UUID getUserId(UserDetails userDetails) {
-        return cartService.getUserIdByEmail(userDetails.getUsername());
     }
 }
