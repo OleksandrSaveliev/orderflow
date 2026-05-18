@@ -4,18 +4,19 @@ import com.my.orderflow.dto.cart.CartItemResponseDto;
 import com.my.orderflow.dto.cart.CartResponseDto;
 import com.my.orderflow.model.Cart;
 import com.my.orderflow.model.CartItem;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
-@Component
-public class CartMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+public interface CartMapper {
 
-    public CartResponseDto toResponse(Cart cart) {
-        List<CartItemResponseDto> items = cart.getItems().stream()
-                .map(this::toItemResponse)
-                .toList();
+    default CartResponseDto toResponse(Cart cart) {
+        List<CartItemResponseDto> items = toItemResponseList(cart.getItems());
 
         BigDecimal total = items.stream()
                 .map(item -> item.priceAtAdd().multiply(BigDecimal.valueOf(item.quantity())))
@@ -24,13 +25,9 @@ public class CartMapper {
         return new CartResponseDto(cart.getId(), items, total);
     }
 
-    public CartItemResponseDto toItemResponse(CartItem item) {
-        return new CartItemResponseDto(
-                item.getId(),
-                item.getProduct().getId(),
-                item.getProduct().getTitle(),
-                item.getQuantity(),
-                item.getPriceAtAdd()
-        );
-    }
+    List<CartItemResponseDto> toItemResponseList(Set<CartItem> items);
+
+    @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productTitle", source = "product.title")
+    CartItemResponseDto toItemResponse(CartItem item);
 }
