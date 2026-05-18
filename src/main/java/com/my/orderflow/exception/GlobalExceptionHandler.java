@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({UserNotFoundException.class, ProductNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, ProductNotFoundException.class, CartNotFoundException.class})
     public ErrorResponseDto handleNotFound(
             RuntimeException ex,
             HttpServletRequest request) {
@@ -107,6 +107,22 @@ public class GlobalExceptionHandler {
         return new ErrorResponseDto(
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InsufficientStockException.class)
+    public ErrorResponseDto handleInsufficientStock(
+            InsufficientStockException ex,
+            HttpServletRequest request) {
+
+        log.debug("Insufficient stock for request {}: {}", request.getRequestURI(), ex.getMessage());
+
+        return new ErrorResponseDto(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
                 ex.getMessage(),
                 request.getRequestURI()
         );
